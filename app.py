@@ -28,7 +28,7 @@ def capture_ip():
     except Exception as e:
         return f"Error al guardar el archivo: {str(e)}"
 
-    return "Información guardada exitosamente en ips_capturadas.txt"
+    return "Error !!"
 
 @app.route('/download')
 def download_file():
