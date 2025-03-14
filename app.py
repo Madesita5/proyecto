@@ -1,31 +1,27 @@
 from flask import Flask, request
 import datetime
 
-# Inicializa la aplicación Flask
 app = Flask(__name__)
 
 @app.route('/')
-def home():
-    return '''<html><body><h1>Haz clic en el enlace para registrar tu información</h1>
-              <a href="/log">Haz clic aquí</a></body></html>'''
+def capture_ip():
+    # Obtener la IP del cliente
+    client_ip = request.remote_addr
 
-@app.route('/log')
-def log():
-    # Obtener la IP del visitante, considerando la cabecera X-Forwarded-For si está presente
-    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    # Obtener detalles del agente de usuario (User-Agent)
     user_agent = request.headers.get('User-Agent')
-    timestamp = datetime.datetime.now()
 
-    # Especifica la ruta donde guardar el archivo
-    archivo = 'C:/Users/Madel/app/ips_capturadas.txt'  # Usando barras inclinadas para evitar problemas
+    # Obtener la fecha y hora actual
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Escribir la información en el archivo de texto
-    with open(archivo, 'a') as file:
-        # Aquí es donde debía estar la indentación
-        file.write(f'{timestamp} - IP: {user_ip}, User-Agent: {user_agent}\n')
+    # Formatear los datos a guardar
+    log_entry = f"{timestamp} - IP: {client_ip} - User-Agent: {user_agent}\n"
 
-    return f'<h1>Información registrada:</h1><p>Tu IP y agente de usuario han sido registrados.</p>'
+    # Guardar en el archivo de texto
+    with open('ips_capturadas.txt', 'a') as file:
+        file.write(log_entry)
 
-# Esta línea es importante para que Flask reconozca el archivo como la aplicación
+    return "Información guardada con éxito."
+
 if __name__ == '__main__':
     app.run(debug=True)
