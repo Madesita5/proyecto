@@ -54,4 +54,5 @@ def count_requests():
 
     return f"El número total de solicitudes es: {request_count}"
 
-if __n
+if __name__ == '__main__':
+    app.run(debug=True)
