@@ -1,5 +1,6 @@
 from flask import Flask, request
 import datetime
+import os
 
 app = Flask(__name__)
 
@@ -20,11 +21,17 @@ def capture_ip():
     # Especificar la ruta completa donde guardar el archivo
     log_file_path = r'C:\Users\Madel\ips_capturadas.txt'
 
-    # Guardar en el archivo de texto
-    with open(log_file_path, 'a') as file:
-        file.write(log_entry)
+    # Verificar si el directorio existe
+    if not os.path.exists(os.path.dirname(log_file_path)):
+        return f"El directorio no existe: {os.path.dirname(log_file_path)}"
 
-    return "Información guardada con éxito."
+    # Guardar en el archivo de texto
+    try:
+        with open(log_file_path, 'a') as file:
+            file.write(log_entry)
+        return f"Información guardada con éxito en {log_file_path}"
+    except Exception as e:
+        return f"Error al guardar el archivo: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)
