@@ -1,41 +1,58 @@
-from flask import Flask, request, redirect, render_template_string
-import requests
+from flask import Flask, request, send_file
+import datetime
+import os
 
 app = Flask(__name__)
 
-# Función para obtener IP pública y ubicación
-def obtener_ip_y_ubicacion():
-    ip_publica = requests.get('https://api.ipify.org').text
-    # Usamos ipinfo.io para obtener la ubicación
-    respuesta = requests.get(f'https://ipinfo.io/{ip_publica}/json')
-    data = respuesta.json()
-    return ip_publica, data.get('city', 'Desconocida'), data.get('region', 'Desconocida'), data.get('country', 'Desconocido')
-
-# Página principal
 @app.route('/')
-def inicio():
-    return render_template_string("""
-        <h1>Bienvenido al portal de inicio de sesión de Gmail</h1>
-        <p>Haz clic en el siguiente enlace para proceder:</p>
-        <a href="/capturar_datos">Ir al inicio de sesión de Gmail</a>
-    """)
+def capture_ip():
+    # Obtener la IP del cliente, considerando si hay un proxy
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
-# Ruta que captura la IP pública, ubicación y otros datos
-@app.route('/capturar_datos')
-def capturar_datos():
-    ip, ciudad, region, pais = obtener_ip_y_ubicacion()
-    # Simulamos la redirección a una página legítima
-    return render_template_string(f"""
-        <h1>Iniciando sesión...</h1>
-        <p>Tu IP pública es: {ip}</p>
-        <p>Ubicación: {ciudad}, {region}, {pais}</p>
-        <p>Gracias por visitar el portal.</p>
-    """)
+    # Obtener detalles del agente de usuario (User-Agent)
+    user_agent = request.headers.get('User-Agent')
 
-# Redirigir a una URL más creíble
-@app.route('/inicio_sesion')
-def redirigir():
-    return redirect("https://accounts.google.com/ServiceLogin")
+    # Obtener la fecha y hora actual
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Formatear los datos a guardar
+    log_entry = f"{timestamp} - IP: {client_ip} - User-Agent: {user_agent}\n"
+
+    # Especificar la ruta completa donde guardar el archivo
+    log_file_path = 'ips_capturadas.txt'
+
+    # Guardar en el archivo de texto
+    try:
+        with open(log_file_path, 'a') as file:
+            file.write(log_entry)
+    except Exception as e:
+        return f"Error al guardar el archivo: {str(e)}"
+
+    return "Información guardada exitosamente en ips_capturadas.txt"
+
+@app.route('/download')
+def download_file():
+    log_file_path = 'ips_capturadas.txt'
+    
+    # Verifica si el archivo existe y luego permite la descarga
+    if os.path.exists(log_file_path):
+        return send_file(log_file_path, as_attachment=True)
+    else:
+        return "Archivo no encontrado."
+
+@app.route('/count')
+def count_requests():
+    log_file_path = 'ips_capturadas.txt'
+    
+    # Contar el número de registros en el archivo
+    try:
+        with open(log_file_path, 'r') as file:
+            lines = file.readlines()
+            request_count = len(lines)
+    except FileNotFoundError:
+        return "El archivo no existe aún."
+
+    return f"El número total de solicitudes es: {request_count}"
 
 if __name__ == '__main__':
     app.run(debug=True)
