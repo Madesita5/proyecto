@@ -1,11 +1,7 @@
 from flask import Flask, request
 import datetime
-import os
 
 app = Flask(__name__)
-
-# Define the path where you want to store the file
-file_path = os.path.join(os.path.expanduser("~"), "ips_capturadas.txt")  # Guardará en tu directorio de usuario
 
 @app.route('/')
 def capture_ip():
@@ -21,8 +17,11 @@ def capture_ip():
     # Formatear los datos a guardar
     log_entry = f"{timestamp} - IP: {client_ip} - User-Agent: {user_agent}\n"
 
-    # Guardar en el archivo de texto en la ruta especificada
-    with open(file_path, 'a') as file:
+    # Especificar la ruta completa donde guardar el archivo
+    log_file_path = r'C:\Users\Madel\ips_capturadas.txt'
+
+    # Guardar en el archivo de texto
+    with open(log_file_path, 'a') as file:
         file.write(log_entry)
 
     return "Información guardada con éxito."
