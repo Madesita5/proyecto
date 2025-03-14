@@ -18,8 +18,9 @@ def capture_ip():
     log_entry = f"{timestamp} - IP: {client_ip} - User-Agent: {user_agent}\n"
 
     # Guardar en el archivo de texto
-    with open('ips_capturadas.txt', 'a') as file:
-        file.write(log_entry)
+    with open('https://github.com/Madesita5/ips_capturadas.txt', 'a') as file:
+    file.write(log_entry)
+
 
     return "Información guardada con éxito."
 
