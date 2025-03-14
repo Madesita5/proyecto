@@ -21,9 +21,10 @@ def capture_ip():
     # Especificar la ruta completa donde guardar el archivo
     log_file_path = r'C:\Users\Madel\ips_capturadas.txt'
 
-    # Verificar si el directorio existe
-    if not os.path.exists(os.path.dirname(log_file_path)):
-        return f"El directorio no existe: {os.path.dirname(log_file_path)}"
+    # Verificar si el directorio existe, si no, crear el directorio
+    directory = os.path.dirname(log_file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)  # Crear el directorio si no existe
 
     # Guardar en el archivo de texto
     try:
