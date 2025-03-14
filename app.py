@@ -1,37 +1,41 @@
-from flask import Flask, request, redirect, jsonify
+from flask import Flask, request, redirect, render_template_string
 import requests
 
 app = Flask(__name__)
 
+# Función para obtener IP pública y ubicación
+def obtener_ip_y_ubicacion():
+    ip_publica = requests.get('https://api.ipify.org').text
+    # Usamos ipinfo.io para obtener la ubicación
+    respuesta = requests.get(f'https://ipinfo.io/{ip_publica}/json')
+    data = respuesta.json()
+    return ip_publica, data.get('city', 'Desconocida'), data.get('region', 'Desconocida'), data.get('country', 'Desconocido')
+
+# Página principal
 @app.route('/')
-def portal():
-    ip_cliente = request.remote_addr
-    mac_cliente = request.headers.get('X-Forwarded-For', 'MAC_DESCONOCIDA')
-    user_agent = request.headers.get('User-Agent')
+def inicio():
+    return render_template_string("""
+        <h1>Bienvenido al portal de inicio de sesión de Gmail</h1>
+        <p>Haz clic en el siguiente enlace para proceder:</p>
+        <a href="/capturar_datos">Ir al inicio de sesión de Gmail</a>
+    """)
 
-    # Obtener ubicación aproximada con una API de geolocalización
-    try:
-        response = requests.get(f'http://ip-api.com/json/{ip_cliente}')
-        geo_data = response.json()
-        location = {
-            "country": geo_data.get("country"),
-            "city": geo_data.get("city"),
-            "lat": geo_data.get("lat"),
-            "lon": geo_data.get("lon")
-        }
-    except:
-        location = {"error": "No se pudo obtener la ubicación"}
+# Ruta que captura la IP pública, ubicación y otros datos
+@app.route('/capturar_datos')
+def capturar_datos():
+    ip, ciudad, region, pais = obtener_ip_y_ubicacion()
+    # Simulamos la redirección a una página legítima
+    return render_template_string(f"""
+        <h1>Iniciando sesión...</h1>
+        <p>Tu IP pública es: {ip}</p>
+        <p>Ubicación: {ciudad}, {region}, {pais}</p>
+        <p>Gracias por visitar el portal.</p>
+    """)
 
-    # Guardar en archivo
-    with open("ips_capturadas.txt", "a") as f:
-        f.write(f"IP: {ip_cliente} | MAC: {mac_cliente} | Navegador: {user_agent} | Ubicación: {location}\n")
-
-    return jsonify({
-        "ip": ip_cliente,
-        "mac": mac_cliente,
-        "navegador": user_agent,
-        "ubicacion": location
-    })
+# Redirigir a una URL más creíble
+@app.route('/inicio_sesion')
+def redirigir():
+    return redirect("https://accounts.google.com/ServiceLogin")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(debug=True)
