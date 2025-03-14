@@ -6,8 +6,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def capture_ip():
-    # Obtener la IP del cliente
-    client_ip = request.remote_addr
+    # Obtener la IP del cliente, considerando si hay un proxy
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     # Obtener detalles del agente de usuario (User-Agent)
     user_agent = request.headers.get('User-Agent')
@@ -40,5 +40,18 @@ def download_file():
     else:
         return "Archivo no encontrado."
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/count')
+def count_requests():
+    log_file_path = 'ips_capturadas.txt'
+    
+    # Contar el número de registros en el archivo
+    try:
+        with open(log_file_path, 'r') as file:
+            lines = file.readlines()
+            request_count = len(lines)
+    except FileNotFoundError:
+        return "El archivo no existe aún."
+
+    return f"El número total de solicitudes es: {request_count}"
+
+if __n
