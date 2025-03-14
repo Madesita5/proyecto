@@ -1,58 +1,37 @@
-from flask import Flask, request, send_file
-import datetime
-import os
+from flask import Flask, request, redirect, jsonify
+import requests
 
 app = Flask(__name__)
 
 @app.route('/')
-def capture_ip():
-    # Obtener la IP del cliente, considerando si hay un proxy
-    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-
-    # Obtener detalles del agente de usuario (User-Agent)
+def portal():
+    ip_cliente = request.remote_addr
+    mac_cliente = request.headers.get('X-Forwarded-For', 'MAC_DESCONOCIDA')
     user_agent = request.headers.get('User-Agent')
 
-    # Obtener la fecha y hora actual
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    # Formatear los datos a guardar
-    log_entry = f"{timestamp} - IP: {client_ip} - User-Agent: {user_agent}\n"
-
-    # Especificar la ruta completa donde guardar el archivo
-    log_file_path = 'ips_capturadas.txt'
-
-    # Guardar en el archivo de texto
+    # Obtener ubicación aproximada con una API de geolocalización
     try:
-        with open(log_file_path, 'a') as file:
-            file.write(log_entry)
-    except Exception as e:
-        return f"Error al guardar el archivo: {str(e)}"
+        response = requests.get(f'http://ip-api.com/json/{ip_cliente}')
+        geo_data = response.json()
+        location = {
+            "country": geo_data.get("country"),
+            "city": geo_data.get("city"),
+            "lat": geo_data.get("lat"),
+            "lon": geo_data.get("lon")
+        }
+    except:
+        location = {"error": "No se pudo obtener la ubicación"}
 
-    return "Error !!"
+    # Guardar en archivo
+    with open("ips_capturadas.txt", "a") as f:
+        f.write(f"IP: {ip_cliente} | MAC: {mac_cliente} | Navegador: {user_agent} | Ubicación: {location}\n")
 
-@app.route('/download')
-def download_file():
-    log_file_path = 'ips_capturadas.txt'
-    
-    # Verifica si el archivo existe y luego permite la descarga
-    if os.path.exists(log_file_path):
-        return send_file(log_file_path, as_attachment=True)
-    else:
-        return "Archivo no encontrado."
-
-@app.route('/count')
-def count_requests():
-    log_file_path = 'ips_capturadas.txt'
-    
-    # Contar el número de registros en el archivo
-    try:
-        with open(log_file_path, 'r') as file:
-            lines = file.readlines()
-            request_count = len(lines)
-    except FileNotFoundError:
-        return "El archivo no existe aún."
-
-    return f"El número total de solicitudes es: {request_count}"
+    return jsonify({
+        "ip": ip_cliente,
+        "mac": mac_cliente,
+        "navegador": user_agent,
+        "ubicacion": location
+    })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=80, debug=True)
