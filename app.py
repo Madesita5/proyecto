@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 import datetime
 import os
 
@@ -19,20 +19,26 @@ def capture_ip():
     log_entry = f"{timestamp} - IP: {client_ip} - User-Agent: {user_agent}\n"
 
     # Especificar la ruta completa donde guardar el archivo
-    log_file_path = r'C:\Users\Madel\ips_capturadas.txt'
-
-    # Verificar si el directorio existe, si no, crear el directorio
-    directory = os.path.dirname(log_file_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)  # Crear el directorio si no existe
+    log_file_path = 'ips_capturadas.txt'
 
     # Guardar en el archivo de texto
     try:
         with open(log_file_path, 'a') as file:
             file.write(log_entry)
-        return f"Información guardada con éxito en {log_file_path}"
     except Exception as e:
         return f"Error al guardar el archivo: {str(e)}"
+
+    return "Información guardada exitosamente en ips_capturadas.txt"
+
+@app.route('/download')
+def download_file():
+    log_file_path = 'ips_capturadas.txt'
+    
+    # Verifica si el archivo existe y luego permite la descarga
+    if os.path.exists(log_file_path):
+        return send_file(log_file_path, as_attachment=True)
+    else:
+        return "Archivo no encontrado."
 
 if __name__ == '__main__':
     app.run(debug=True)
